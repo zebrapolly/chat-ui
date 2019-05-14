@@ -6,6 +6,7 @@ import { HttpLink } from 'apollo-link-http';
 import { ApolloProvider } from 'react-apollo';
 
 import './App.css';
+// import ReactDOM from 'react-dom';
 import Chats from './compomponents/chats/Chats';
 
 const cache = new InMemoryCache();
