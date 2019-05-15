@@ -1,12 +1,21 @@
 import React from 'react';
 
-import { Query, QueryResult, OperationVariables } from "react-apollo";
+import { Query, QueryResult, OperationVariables, Mutation, MutationResult, MutationFn } from "react-apollo";
 import gql from 'graphql-tag';
-import { Card, Layout, Menu } from 'antd';
+import { Card, Layout, Menu, Button } from 'antd';
 
 import {Chat} from '../../../../typings/types';
 
 const { Content, Header, Sider } = Layout;
+
+const CREATE_CHAT = gql`
+    mutation CreateChat ($title: String){
+        createChat(title: $title) {
+            id
+            title
+        }
+    }
+`
 
 const GET_CHATS = gql`
     query {
@@ -34,6 +43,7 @@ export default function Chats() {
             return (
                 <Layout style={{ minHeight: '100vh' }}>
                     <Sider>
+                        <CreateChatButton />
                         <Menu
                             theme="dark"
                             mode="inline"
@@ -61,4 +71,12 @@ export default function Chats() {
             }}
             </Query>
     )
+}
+
+function CreateChatButton() {
+    return <Mutation mutation={CREATE_CHAT}>
+    {(mutationFn: MutationFn<any, OperationVariables>, data: any) => {
+        return <Button onClick={e => mutationFn({variables: {title: 'test'}})}/>
+    }}
+    </Mutation>
 }
