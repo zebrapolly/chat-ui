@@ -39,7 +39,6 @@ export default function Chats() {
         {(result: QueryResult<any, OperationVariables>) => {
             if (result.loading) return <div>loading...</div>;
             if (result.error) return <p>ERROR</p>;
-            console.log(result.data.getChats)
             return (
                 <Layout style={{ minHeight: '100vh' }}>
                     <Sider>
@@ -56,17 +55,14 @@ export default function Chats() {
                                     </Card>
                                 </Menu.Item>
                             })}
-
                         </Menu>
-                        </Sider>
+                    </Sider>
                     <Layout>
-
                         <Content style={{ margin: '24px 16px 16px'}}>
                             ddfsfsdfsdfsd
                         </Content>
                     </Layout>
-
-                    </Layout>
+                </Layout>
               );
             }}
             </Query>
