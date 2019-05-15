@@ -4,13 +4,18 @@ import { Query, QueryResult, OperationVariables } from "react-apollo";
 import gql from 'graphql-tag';
 import { Card, Layout, Menu } from 'antd';
 
-const { Content, Header } = Layout;
+import {Chat} from '../../../../typings/types';
+
+const { Content, Header, Sider } = Layout;
 
 const GET_CHATS = gql`
     query {
         getChats {
             id
             title
+            lastMessage {
+                text
+            }
             messages {
             id
             text
@@ -27,28 +32,31 @@ export default function Chats() {
             if (result.error) return <p>ERROR</p>;
             console.log(result.data.getChats)
             return (
-                // <Layout>
-                <div>
-                    <Layout style={{ width: '100 px' }}>
+                <Layout style={{ minHeight: '100vh' }}>
+                    <Sider>
                         <Menu
                             theme="dark"
-                            mode="horizontal"
-                            defaultSelectedKeys={['2']}
-                            style={{ lineHeight: '64px' }}
+                            mode="inline"
                         >
-                            <Menu.Item key="1">nav 1</Menu.Item>
-                            <Menu.Item key="2">nav 2</Menu.Item>
-                            <Menu.Item key="3">nav 3</Menu.Item>
-                        </Menu>
-                    </Layout>
-                    <Layout>
-                        <Content style={{ margin: '24px 16px 16px', overflow: 'initial' }}>
-                            {result.data.getChats.map((item: any) => {
-                                return <Card title={item.title} key={item.id} style={{ width: 300 }}/>
+                            {result.data.getChats.map((item: Chat) => {
+                                return <Menu.Item key={item.id} style={{height: 80}}>
+                                    <Card title={item.title} size="small">
+                                    <p>{item.lastMessage ? item.lastMessage.text : ''}</p>
+
+                                    </Card>
+                                </Menu.Item>
                             })}
+
+                        </Menu>
+                        </Sider>
+                    <Layout>
+
+                        <Content style={{ margin: '24px 16px 16px'}}>
+                            ddfsfsdfsdfsd
                         </Content>
                     </Layout>
-                </div>
+
+                    </Layout>
               );
             }}
             </Query>

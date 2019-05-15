@@ -7,7 +7,7 @@ import { ApolloProvider } from 'react-apollo';
 
 import './App.css';
 // import ReactDOM from 'react-dom';
-import Chats from './compomponents/chats/Chats';
+import Chats from './components/chats/Chats';
 
 const cache = new InMemoryCache();
 const link = new HttpLink({
