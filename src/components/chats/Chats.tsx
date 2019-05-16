@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { Query, QueryResult, OperationVariables, Mutation, MutationResult, MutationFn } from "react-apollo";
+import { Query, QueryResult, OperationVariables, Mutation, MutationFn } from "react-apollo";
 import gql from 'graphql-tag';
-import { Card, Layout, Menu, Button } from 'antd';
+import { Layout, Button } from 'antd';
 
-import {Chat} from '../../../../typings/types';
+import { ChatsList } from '../ChatsList/ChatsList';
 
-const { Content, Header, Sider } = Layout;
+const { Content, Sider } = Layout;
 
 const CREATE_CHAT = gql`
     mutation CreateChat ($title: String){
@@ -18,7 +18,7 @@ const CREATE_CHAT = gql`
 `
 
 const GET_CHATS = gql`
-    query {
+    query GetChats{
         getChats {
             id
             title
@@ -33,46 +33,61 @@ const GET_CHATS = gql`
     }
 `
 
-export default function Chats() {
-    return (
-        <Query query={GET_CHATS}>
-        {(result: QueryResult<any, OperationVariables>) => {
-            if (result.loading) return <div>loading...</div>;
-            if (result.error) return <p>ERROR</p>;
-            return (
-                <Layout style={{ minHeight: '100vh' }}>
-                    <Sider>
-                        <CreateChatButton />
-                        <Menu
-                            theme="dark"
-                            mode="inline"
-                        >
-                            {result.data.getChats.map((item: Chat) => {
-                                return <Menu.Item key={item.id} style={{height: 80}}>
-                                    <Card title={item.title} size="small">
-                                    <p>{item.lastMessage ? item.lastMessage.text : ''}</p>
-
-                                    </Card>
-                                </Menu.Item>
-                            })}
-                        </Menu>
-                    </Sider>
-                    <Layout>
-                        <Content style={{ margin: '24px 16px 16px'}}>
-                            ddfsfsdfsdfsd
-                        </Content>
-                    </Layout>
+const GET_CHATS_UPDATES = gql`
+    subscription ChatUpdates{
+        chatUpdated {
+            id
+            title
+            messages {
+                id
+            }
+            lastMessage {
+                text
+            }
+        }
+    }
+`
+export class Chats extends React.Component {
+    render() {
+        return (
+            <Layout style={{ minHeight: '100vh' }}>
+                <Sider>
+                    <CreateChatButton />
+                    <Query query={GET_CHATS}>
+                    {(result: QueryResult<any, OperationVariables>) => 
+                        <ChatsList
+                                chats={result.data.getChats}
+                                subscribeToChatUpdates={() => 
+                                    result.subscribeToMore({
+                                        document: GET_CHATS_UPDATES,
+                                        updateQuery: (prev, { subscriptionData }) => {
+                                            if (!subscriptionData.data) return prev;
+                                            const newChat = subscriptionData.data.chatUpdated;
+                                            return Object.assign({}, prev, {
+                                                getChats: [newChat, ...prev.getChats]
+                                            });
+                                            }
+                                    })
+                                }
+                            />
+                    }
+                    </Query>
+                </Sider>
+                <Layout>
+                    <Content style={{ margin: '24px 16px 16px'}}>
+                        ddfsfsdfsdfsd
+                    </Content>
                 </Layout>
-              );
-            }}
-            </Query>
-    )
+            </Layout>
+    
+        )
+}
 }
 
 function CreateChatButton() {
     return <Mutation mutation={CREATE_CHAT}>
-    {(mutationFn: MutationFn<any, OperationVariables>, data: any) => {
-        return <Button onClick={e => mutationFn({variables: {title: 'test'}})}/>
-    }}
+        {(mutationFn: MutationFn<any, OperationVariables>, data: any) => {
+            return <Button onClick={e => mutationFn({variables: {title: 'test'}})}/>
+        }}
     </Mutation>
 }
