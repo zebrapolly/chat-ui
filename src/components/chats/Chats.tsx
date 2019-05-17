@@ -23,8 +23,8 @@ const GET_CHATS = gql`
                 text
             }
             messages {
-            id
-            text
+                id
+                text
             }
         }
     }
@@ -35,13 +35,14 @@ const GET_CHATS_UPDATES = gql`
         chatUpdated {
                 chat {
                     id
-                title
-                messages {
-                    id
-                }
-                lastMessage {
-                    text
-                }
+                    title
+                    messages {
+                        id
+                        text
+                    }
+                    lastMessage {
+                        text
+                    }
             }
             type
 
@@ -62,20 +63,35 @@ export class Chats extends React.Component {
                                     result.subscribeToMore({
                                         document: GET_CHATS_UPDATES,
                                         updateQuery: (prev, { subscriptionData }) => {
+
                                             if (!subscriptionData.data) return prev;
                                             const chatUpdated = subscriptionData.data.chatUpdated;
-                                            const chat = subscriptionData.data.chatUpdated.chat;
+                                            const chat = chatUpdated.chat;
                                             if (chatUpdated.type === ChatsUpdateType.CREATED) {
                                                 return Object.assign({}, prev, {
                                                     getChats: [chat, ...prev.getChats]
                                                 });
                                             }
                                             if (chatUpdated.type === ChatsUpdateType.DELETED) {
-                                                const newChats = prev.getChats;
-                                                console.log(prev, subscriptionData)
-                                                prev.getChats.find((item: any, index: number) => {
+
+                                                const newChats = [...prev.getChats];
+                                                newChats.find((item: any, index: number) => {
                                                     if (item.id === chat.id) {
                                                         newChats.splice(index, 1);
+                                                        return true;
+                                                    }
+                                                    return false;
+                                                })
+                                                return {
+                                                    getChats: newChats
+                                                };
+                                            }
+                                            if (chatUpdated.type === ChatsUpdateType.UPDATED) {
+
+                                                const newChats = [...prev.getChats];
+                                                newChats.find((item: any) => {
+                                                    if (item.id === chat.id) {
+                                                        item = subscriptionData.data.chatUpdated.chat; // Need refactoring
                                                         return true;
                                                     }
                                                     return false;
