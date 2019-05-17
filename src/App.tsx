@@ -7,7 +7,7 @@ import { WebSocketLink } from 'apollo-link-ws';
 import { ApolloProvider } from 'react-apollo';
 
 import './App.css';
-import {Chats} from './components/chats/Chats';
+import {Chats} from './components/Chats/Chats';
 import { split } from 'apollo-link';
 import { getMainDefinition } from 'apollo-utilities';
 
@@ -44,7 +44,7 @@ const client = new ApolloClient({
 const App: React.FC = () => {
   return (
     <ApolloProvider client={client}>
-    <Chats />
+      <Chats />
     </ApolloProvider>
   );
 }

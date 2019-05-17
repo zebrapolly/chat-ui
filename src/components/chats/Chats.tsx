@@ -1,21 +1,18 @@
 import React from 'react';
 
-import { Query, QueryResult, OperationVariables, Mutation, MutationFn } from "react-apollo";
+import { Query, QueryResult, OperationVariables } from "react-apollo";
 import gql from 'graphql-tag';
-import { Layout, Button } from 'antd';
+import { Layout } from 'antd';
 
 import { ChatsList } from '../ChatsList/ChatsList';
+import { CreateChatButton } from '../CreateChatButton/CreateChatButton';
+export enum ChatsUpdateType {
+    DELETED = "DELETED",
+    UPDATED = "UPDATED",
+    CREATED = "CREATED"
+}
 
 const { Content, Sider } = Layout;
-
-const CREATE_CHAT = gql`
-    mutation CreateChat ($title: String){
-        createChat(title: $title) {
-            id
-            title
-        }
-    }
-`
 
 const GET_CHATS = gql`
     query GetChats{
@@ -36,14 +33,18 @@ const GET_CHATS = gql`
 const GET_CHATS_UPDATES = gql`
     subscription ChatUpdates{
         chatUpdated {
-            id
-            title
-            messages {
-                id
+                chat {
+                    id
+                title
+                messages {
+                    id
+                }
+                lastMessage {
+                    text
+                }
             }
-            lastMessage {
-                text
-            }
+            type
+
         }
     }
 `
@@ -56,17 +57,34 @@ export class Chats extends React.Component {
                     <Query query={GET_CHATS}>
                     {(result: QueryResult<any, OperationVariables>) => 
                         <ChatsList
-                                chats={result.data.getChats}
+                                chats={result.data!.getChats}
                                 subscribeToChatUpdates={() => 
                                     result.subscribeToMore({
                                         document: GET_CHATS_UPDATES,
                                         updateQuery: (prev, { subscriptionData }) => {
                                             if (!subscriptionData.data) return prev;
-                                            const newChat = subscriptionData.data.chatUpdated;
-                                            return Object.assign({}, prev, {
-                                                getChats: [newChat, ...prev.getChats]
-                                            });
+                                            const chatUpdated = subscriptionData.data.chatUpdated;
+                                            const chat = subscriptionData.data.chatUpdated.chat;
+                                            if (chatUpdated.type === ChatsUpdateType.CREATED) {
+                                                return Object.assign({}, prev, {
+                                                    getChats: [chat, ...prev.getChats]
+                                                });
                                             }
+                                            if (chatUpdated.type === ChatsUpdateType.DELETED) {
+                                                const newChats = prev.getChats;
+                                                console.log(prev, subscriptionData)
+                                                prev.getChats.find((item: any, index: number) => {
+                                                    if (item.id === chat.id) {
+                                                        newChats.splice(index, 1);
+                                                        return true;
+                                                    }
+                                                    return false;
+                                                })
+                                                return {
+                                                    getChats: newChats
+                                                };
+                                            }
+                                        }
                                     })
                                 }
                             />
@@ -81,13 +99,5 @@ export class Chats extends React.Component {
             </Layout>
     
         )
-}
-}
-
-function CreateChatButton() {
-    return <Mutation mutation={CREATE_CHAT}>
-        {(mutationFn: MutationFn<any, OperationVariables>, data: any) => {
-            return <Button onClick={e => mutationFn({variables: {title: 'test'}})}/>
-        }}
-    </Mutation>
+    }
 }
