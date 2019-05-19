@@ -6,13 +6,15 @@ import { Layout } from 'antd';
 
 import { ChatsList } from '../ChatsList/ChatsList';
 import { CreateChatButton } from '../CreateChatButton/CreateChatButton';
+import { ChatWindow } from '../ChatWindow/ChatWindow';
+
 export enum ChatsUpdateType {
     DELETED = "DELETED",
     UPDATED = "UPDATED",
     CREATED = "CREATED"
 }
 
-const { Content, Sider } = Layout;
+const { Sider } = Layout;
 
 const GET_CHATS = gql`
     query GetChats{
@@ -22,24 +24,16 @@ const GET_CHATS = gql`
             lastMessage {
                 text
             }
-            messages {
-                id
-                text
-            }
         }
     }
 `
 
 const GET_CHATS_UPDATES = gql`
-    subscription ChatUpdates{
-        chatUpdated {
+    subscription ChatsUpdates{
+        chatsUpdated {
                 chat {
                     id
                     title
-                    messages {
-                        id
-                        text
-                    }
                     lastMessage {
                         text
                     }
@@ -49,7 +43,15 @@ const GET_CHATS_UPDATES = gql`
         }
     }
 `
-export class Chats extends React.Component {
+
+interface State {
+    openedChat: string | null
+}
+
+export class Chats extends React.Component<{}, State> {
+    state: State = {
+        openedChat: null
+    }
     render() {
         return (
             <Layout style={{ minHeight: '100vh' }}>
@@ -59,20 +61,26 @@ export class Chats extends React.Component {
                     {(result: QueryResult<any, OperationVariables>) => 
                         <ChatsList
                                 chats={result.data!.getChats}
-                                subscribeToChatUpdates={() => 
+                                handleOpenChat={(chat: any) => {
+                                    this.setState({
+                                        openedChat: chat
+                                    })
+                                }}
+                                subscribeToChatsUpdates={() => 
                                     result.subscribeToMore({
                                         document: GET_CHATS_UPDATES,
                                         updateQuery: (prev, { subscriptionData }) => {
-
+                                            // console.log('subscriptionData1', subscriptionData)
+                                            // console.log('prev1', prev)
                                             if (!subscriptionData.data) return prev;
-                                            const chatUpdated = subscriptionData.data.chatUpdated;
-                                            const chat = chatUpdated.chat;
-                                            if (chatUpdated.type === ChatsUpdateType.CREATED) {
+                                            const chatsUpdated = subscriptionData.data.chatsUpdated;
+                                            const chat = chatsUpdated.chat;
+                                            if (chatsUpdated.type === ChatsUpdateType.CREATED) {
                                                 return Object.assign({}, prev, {
                                                     getChats: [chat, ...prev.getChats]
                                                 });
                                             }
-                                            if (chatUpdated.type === ChatsUpdateType.DELETED) {
+                                            if (chatsUpdated.type === ChatsUpdateType.DELETED) {
 
                                                 const newChats = [...prev.getChats];
                                                 newChats.find((item: any, index: number) => {
@@ -86,12 +94,12 @@ export class Chats extends React.Component {
                                                     getChats: newChats
                                                 };
                                             }
-                                            if (chatUpdated.type === ChatsUpdateType.UPDATED) {
+                                            if (chatsUpdated.type === ChatsUpdateType.UPDATED) {
 
                                                 const newChats = [...prev.getChats];
                                                 newChats.find((item: any) => {
                                                     if (item.id === chat.id) {
-                                                        item = subscriptionData.data.chatUpdated.chat; // Need refactoring
+                                                        item = subscriptionData.data.chatsUpdated.chat; // Need refactoring
                                                         return true;
                                                     }
                                                     return false;
@@ -107,11 +115,7 @@ export class Chats extends React.Component {
                     }
                     </Query>
                 </Sider>
-                <Layout>
-                    <Content style={{ margin: '24px 16px 16px'}}>
-                        ddfsfsdfsdfsd
-                    </Content>
-                </Layout>
+                <ChatWindow chat={this.state.openedChat} /> 
             </Layout>
     
         )

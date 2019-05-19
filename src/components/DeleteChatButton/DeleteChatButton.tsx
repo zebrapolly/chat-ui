@@ -16,10 +16,14 @@ const DELETE_CHAT = gql`
 `
 
 export class DeleteChatButton extends React.Component<DeleteChatButtonProps>{
+  handleOnClick = (e: any, mutationFn: MutationFn<any, OperationVariables>) => {
+    e.stopPropagation();
+    mutationFn({variables: {id: this.props.id}})
+  } 
   render() {
     return <Mutation mutation={DELETE_CHAT}>
       {(mutationFn: MutationFn<any, OperationVariables>, data: any) => {
-          return <Button onClick={e => mutationFn({variables: {id: this.props.id}})}/>
+          return <Button onClick={e => this.handleOnClick(e, mutationFn)}/>
       }}
     </Mutation>
   }
